@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-styleeditor@latest/dist/css/Leaflet.StyleEditor.min.css" />
+  </head>
+  <body>
+    <div id="map"></div>
+    <script src="js/leaflet.js"></script>
+    <script src="js/leaflet.draw.js"></script>
+    <script src="js/jquery-3.6.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-styleeditor@latest/dist/javascript/Leaflet.StyleEditor.min.js"></script>
+    <script>
+      googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+        maxZoom: 20,
+        minZoom: 4,
+        subdomains:['mt0','mt1','mt2','mt3']
+      })
+      var map = L.map('map')
+      .addLayer(googleSat)
+      .setView([-15, -50], 4);
+      map.setMaxBounds(map.getBounds());
+    </script>
+    <script>
+
+
+      let drawn_items = L.featureGroup().addTo(map);
+      let db_data = L.layerGroup().addTo(map);
+
+      let url = "http://10.211.19.75:4000/sql?q=";
+      let sql_query = "SELECT * FROM teses,  dissertações";
+
+      function addPopup(feature, layer) {
+          layer.bindPopup(
+              //feature.properties.description +
+              //"<br>" + feature.properties.name
+          );
+      }
+      fetch(url + sql_query)
+          .then(function(response) {
+              return response.json();
+          })
+          .then(function(data) {
+              L.geoJSON(data, {onEachFeature: addPopup}).addTo(db_data);
+          });
+
+      // Add draw control
+      new L.Control.Draw({
+          draw : {
+              polygon : true,
+              polyline : true,
+              rectangle : false,     // Rectangles disabled
+              circle : false,        // Circles disabled
+              circlemarker : false,  // Circle markers disabled
+              marker: true
+          },
+          edit : {
+              featureGroup: drawn_items
+          }
+      }).addTo(map);
+
+      // On draw - create editable popup
+      map.addEventListener("draw:created", function(e) {
+          e.layer.addTo(drawn_items);
+          create_form_popup();
+      });
+
+      // On edit or delete - Close popup
+      map.addEventListener("draw:editstart", function(e) {
+          drawn_items.closePopup();
+      });
+      map.addEventListener("draw:deletestart", function(e) {
+          drawn_items.closePopup();
+      });
+      map.addEventListener("draw:editstop", function(e) {
+          drawn_items.openPopup();
+      });
+      map.addEventListener("draw:deletestop", function(e) {
+          if(drawn_items.getLayers().length > 0) {
+              drawn_items.openPopup();
+          }
+      });
+
+      // Create editable popup
+      function create_form_popup() {
+          let popup_content =
+              '<form>' +
+              'Description:<br><input type="text" id="input_desc"><br>' +
+              'Name:<br><input type="text" id="input_name"><br>' +
+              '<input type="button" value="Submit" id="submit">' +
+              '</form>';
+          drawn_items.bindPopup(popup_content).openPopup();
+      }
+
+      // Submission - Sending to CARTO
+      function set_data(e) {
+
+          if(e.target && e.target.id == "submit") {
+
+              // Get user name and description
+              let entered_username = document.getElementById("input_name").value;
+              let entered_description = document.getElementById("input_desc").value;
+
+              // For each drawn layer
+              drawn_items.eachLayer(function(layer) {
+
+                  // Create SQL expression to insert layer
+                  let drawing = JSON.stringify(layer.toGeoJSON().geometry);
+                  let sql =
+                      "INSERT INTO beer_sheva (geom, description, name) " +
+                      "VALUES (ST_SetSRID(ST_GeomFromGeoJSON('" +
+                      drawing + "'), 4326), '" +
+                      entered_description + "', '" +
+                      entered_username + "')";
+                  console.log(sql);
+
+                  // Send the data
+                  fetch(url, {
+                      method: "post",
+                      headers: {
+                          "Content-Type": "application/json"
+                      },
+                      body: JSON.stringify({"q": sql})
+                  })
+                      .then(function(data) {
+                          console.log("Data saved");
+                      })
+                      .catch(function(error) {
+                          console.log("Problem saving the data:", error);
+                      });
+
+                  // Transfer submitted drawing to the CARTO layer
+                  let new_data = layer.toGeoJSON();
+                  new_data.properties.description = entered_description;
+                  new_data.properties.name = entered_username;
+                  L.geoJSON(new_data, {onEachFeature: addPopup}).addTo(db_data);
+
+              });
+
+              // Clear drawn items layer
+              drawn_items.closePopup();
+              drawn_items.clearLayers();
+
+          }
+
+      }
+
+      // Click on 'submit' event listener
+      document.addEventListener("click", set_data);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,110 @@
+#drawing-controls {
+  position: absolute;
+  left: calc(calc(100% - 338px) / 2);
+  height: 48px;
+  background-color: #FFF;
+  border-radius: 5px;
+  bottom: 180px;
+  z-index: 99999;
+  vertical-align: middle;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%), 0 -1px 0px rgb(0 0 0 / 2%);
+  padding-left: 20px;
+  padding-right: 20px;
+}
+.tool {
+  vertical-align: middle;
+  display: inline-block;
+  margin-top: 12px;
+  margin-right: 15px;
+}
+.tool img {
+  opacity: .4;
+  width: 23px;
+  transition: opacity .1s cubic-bezier(.05,.03,.35,1);
+}
+.tool img:hover {
+  cursor: pointer;
+  opacity: 1;
+}
+.tool:hover {
+  cursor: pointer!important;
+}
+.tool-active img {
+  opacity: 1!important;
+}
+/* Color picker */
+#color-picker {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  border: 1px solid #EAEAEA;
+  box-sizing: border-box;
+  text-align: center;
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: 12px;
+  transition: border-color .35s cubic-bezier(.05,.03,.35,1);
+}
+#color-picker:hover {
+  border-color: #C8C8C8!important;
+  cursor: pointer;
+}
+#inner-color {
+  background-color: #624EEF;
+  border-radius: 50%;
+  text-align: center;
+  height: 17px;
+  width: 17px;
+  margin-top: 3px;
+  margin-left: 3px;
+}
+#color-list {
+  position: absolute;
+  margin-top: -85px;
+  height: 40px;
+  background-color: #FFF;
+  border-radius: 5px;
+  border: 1px solid #EAEAEA;
+  padding-left: 10px;
+  transform: translateX(-50%);
+  margin-left: 15.5px;
+  width: fit-content;
+  visibility: hidden;
+}
+.color-enabled {
+  visibility: visible!important;
+}
+.color {
+  width: 20px;
+  height: 20px;
+  background-color: #624EEF;
+  display: inline-block;
+  margin-right: 10px;
+  border-radius: 50%;
+  margin-top: 10px;
+}
+/* Should probably do this programmatically... */
+#color1, .colorEC1D43 {
+  background: #EC1D43!important;
+}
+#color2, .colorEC811D {
+  background: #EC811D!important;
+}
+#color3, .colorECBE1D {
+  background: #ECBE1D!important;
+}
+#color4, .colorB6EC1D {
+  background: #B6EC1D!important;
+}
+#color5, .color1DA2EC {
+  background: #1DA2EC!important;
+}
+#color6, .color781DEC {
+  background: #781DEC!important;
+}
+#color7, .colorCF1DEC {
+  background: #CF1DEC!important;
+}
+#color8, .color222222 {
+  background: #222222!important;
+}
